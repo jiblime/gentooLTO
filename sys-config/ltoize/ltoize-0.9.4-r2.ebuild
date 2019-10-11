@@ -55,19 +55,18 @@ pkg_setup() {
 
 graphite_preinst() {
 
-	set -B
-	if use graphite; then
-		elog "Installing make.conf.lto with Graphite flags if it isn't enabled already"
-		[[ -z $(grep '^CFLAGS\=.*${GRAPHITE}' "${LTO_PORTAGE_DIR}/make.conf.lto") ]] &&
-		sed -i 's/^\(CFLAGS\=\"\)/\1${GRAPHITE}/' "${LTO_PORTAGE_DIR}/make.conf.lto" ||
-		elog "make.conf.lto already has ${GRAPHITE}"
-	else
-		elog "Installing make.conf.lto without Graphite flags if it isn't disabled already"
-		[[ -n $(grep '^CFLAGS\=.*${GRAPHITE}' "${LTO_PORTAGE_DIR}/make.conf.lto") ]] &&
-		sed -i 's/^\(CFLAGS\=\".*\)${GRAPHITE}/\1/' "${LTO_PORTAGE_DIR}/make.conf.lto" ||
-		elog "make.conf.lto doesn't have ${GRAPHITE}"
+	grep '^GRAPHITE\=\|^#\ GRAPHITE\=' "${LTO_PORTAGE_DIR}/make.conf.lto.defines" &> /dev/null
+	if [ "${?}" != "0" ]; then
+		ewarn "Unable to find the GRAPHITE variable in make.conf.lto.defines to edit. This emerge will assume this is expected behavior. Please check the file and add changes manually if necessary"
+		return
 	fi
-	set +B
+	if use graphite; then
+		elog "Installing make.conf.lto.defines with Graphite flags enabled"
+		sed -i 's/^#\ \(GRAPHITE\=\)/\1/g' "${LTO_PORTAGE_DIR}/make.conf.lto.defines"
+	else
+		elog "Installing make.conf.lto.defines with Graphite flags disabled"
+		sed -i 's/^\(GRAPHITE\=\)/#\ \1/g' "${LTO_PORTAGE_DIR}/make.conf.lto.defines"
+	fi
 
 }
 
@@ -80,10 +79,10 @@ pkg_preinst() {
 
 	#Install make.conf settings
 
+	graphite_preinst
 	elog "Installing make.conf.lto.defines definitions for optimizations used in this overlay"
 	dosym "${LTO_PORTAGE_DIR}/make.conf.lto.defines" "${PORTAGE_CONFIGROOT%/}/etc/portage/make.conf.lto.defines"
 
-	graphite_preinst
 	elog "Installing make.conf.lto default full optimization config for make.conf"
 	dosym "${LTO_PORTAGE_DIR}/make.conf.lto" "${PORTAGE_CONFIGROOT%/}/etc/portage/make.conf.lto"
 
