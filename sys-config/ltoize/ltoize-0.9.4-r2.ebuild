@@ -84,6 +84,12 @@ pkg_preinst() {
 		dosym "${LTO_PORTAGE_DIR}/bashrc.d/42-lto-flag-o-matic.sh" "${PORTAGE_CONFIGROOT%/}/etc/portage/bashrc.d/42-lto-flag-o-matic.sh"
 	fi
 
+	#Optional: filter ${GRAPHITE} flags from ebuild environments
+	if ! use graphite; then
+		ewarn 'Installing bashrc.d hook to filter ${GRAPHITE} flags from ebuild environments'
+		dosym "${LTO_PORTAGE_DIR}/bashrc.d/43-filter-graphite.sh" "${PORTAGE_CONFIGROOT%/}/etc/portage/bashrc.d/43-filter-graphite.sh"
+	fi
+
 }
 
 pkg_postinst()
