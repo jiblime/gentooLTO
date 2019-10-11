@@ -53,6 +53,24 @@ pkg_setup() {
 
 }
 
+graphite_preinst() {
+
+	set -B
+	if use graphite; then
+		elog "Installing make.conf.lto with Graphite flags if it isn't enabled already"
+		[[ -z $(grep '^CFLAGS\=.*${GRAPHITE}' "${LTO_PORTAGE_DIR}/make.conf.lto") ]] &&
+		sed -i 's/^\(CFLAGS\=\"\)/\1${GRAPHITE}/' "${LTO_PORTAGE_DIR}/make.conf.lto" ||
+		elog "make.conf.lto already has ${GRAPHITE}"
+	else
+		elog "Installing make.conf.lto without Graphite flags if it isn't disabled already"
+		[[ -n $(grep '^CFLAGS\=.*${GRAPHITE}' "${LTO_PORTAGE_DIR}/make.conf.lto") ]] &&
+		sed -i 's/^\(CFLAGS\=\".*\)${GRAPHITE}/\1/' "${LTO_PORTAGE_DIR}/make.conf.lto" ||
+		elog "make.conf.lto doesn't have ${GRAPHITE}"
+	fi
+	set +B
+
+}
+
 pkg_preinst() {
 
 	GENTOOLTO_PORTDIR=$(portageq get_repo_path ${PORTAGE_CONFIGROOT} lto-overlay)
@@ -65,6 +83,7 @@ pkg_preinst() {
 	elog "Installing make.conf.lto.defines definitions for optimizations used in this overlay"
 	dosym "${LTO_PORTAGE_DIR}/make.conf.lto.defines" "${PORTAGE_CONFIGROOT%/}/etc/portage/make.conf.lto.defines"
 
+	graphite_preinst
 	elog "Installing make.conf.lto default full optimization config for make.conf"
 	dosym "${LTO_PORTAGE_DIR}/make.conf.lto" "${PORTAGE_CONFIGROOT%/}/etc/portage/make.conf.lto"
 
