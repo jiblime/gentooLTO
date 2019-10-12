@@ -53,23 +53,6 @@ pkg_setup() {
 
 }
 
-graphite_preinst() {
-
-	grep '^GRAPHITE\=\|^#\ GRAPHITE\=' "${LTO_PORTAGE_DIR}/make.conf.lto.defines" &> /dev/null
-	if [ "${?}" != "0" ]; then
-		ewarn "Unable to find the GRAPHITE variable in make.conf.lto.defines to edit. This emerge will assume this is expected behavior. Please check the file and add changes manually if necessary"
-		return
-	fi
-	if use graphite; then
-		elog "Installing make.conf.lto.defines with Graphite flags enabled"
-		sed -i 's/^#\ \(GRAPHITE\=\)/\1/g' "${LTO_PORTAGE_DIR}/make.conf.lto.defines"
-	else
-		elog "Installing make.conf.lto.defines with Graphite flags disabled"
-		sed -i 's/^\(GRAPHITE\=\)/#\ \1/g' "${LTO_PORTAGE_DIR}/make.conf.lto.defines"
-	fi
-
-}
-
 pkg_preinst() {
 
 	GENTOOLTO_PORTDIR=$(portageq get_repo_path ${PORTAGE_CONFIGROOT} lto-overlay)
@@ -79,7 +62,6 @@ pkg_preinst() {
 
 	#Install make.conf settings
 
-	graphite_preinst
 	elog "Installing make.conf.lto.defines definitions for optimizations used in this overlay"
 	dosym "${LTO_PORTAGE_DIR}/make.conf.lto.defines" "${PORTAGE_CONFIGROOT%/}/etc/portage/make.conf.lto.defines"
 
@@ -100,6 +82,12 @@ pkg_preinst() {
 	if use override-flagomatic; then
 		ewarn "Installing bashrc.d hook to override strip-flags and replace-flags functions in flag-o-matic.  This is an experimental feature!"
 		dosym "${LTO_PORTAGE_DIR}/bashrc.d/42-lto-flag-o-matic.sh" "${PORTAGE_CONFIGROOT%/}/etc/portage/bashrc.d/42-lto-flag-o-matic.sh"
+	fi
+
+	#Optional: filter ${GRAPHITE} flags from ebuild environments
+	if ! use graphite; then
+		ewarn 'Installing bashrc.d hook to filter ${GRAPHITE} flags from ebuild environments'
+		dosym "${LTO_PORTAGE_DIR}/bashrc.d/43-filter-graphite.sh" "${PORTAGE_CONFIGROOT%/}/etc/portage/bashrc.d/43-filter-graphite.sh"
 	fi
 
 }
