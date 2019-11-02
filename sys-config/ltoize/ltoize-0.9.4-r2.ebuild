@@ -15,6 +15,8 @@ LICENSE="GPL-2+"
 SLOT="0"
 IUSE="+graphite override-flagomatic"
 
+
+
 #portage-bashrc-mv can be obtained from mv overlay
 DEPEND="
 	>=sys-devel/binutils-2.32:*
@@ -24,12 +26,11 @@ DEPEND="
 		>=sys-apps/portage-mgorny-2.3.51.1
 	)
 	app-portage/portage-bashrc-mv[cflags]
+	graphite? ( >=sys-devel/gcc-4.8.5[graphite] )
 	"
 
-RDEPEND="${DEPEND}
-	graphite? ( >=sys-devel/gcc-4.8.5[graphite] )
-"
-#448024 Gentoo does not have proper graphite support for GCC <4.8
+RDEPEND="${DEPEND}"
+
 #Test binutils and gcc version
 
 pkg_setup() {
